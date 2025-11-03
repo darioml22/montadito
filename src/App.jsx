@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import './App.css'
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useState } from 'react';
+import './App.css';
+import { HashRouter as Router, Routes, Route } from "react-router-dom"; // <- HashRouter
 import Navbar from "./components/Navbar";
 import Home from "./pages/Food";
 import Dates from "./pages/Dates";
@@ -9,7 +9,7 @@ import Trips from "./pages/Trips";
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-linear-to-b from-[#658C58] to-[#F0E491]">
+      <div className="min-h-screen bg-[#658C58] ">
         <Navbar />
         <div className="pt-3">
           <Routes>
@@ -23,4 +23,4 @@ function App() {
   );
 }
 
-export default App
+export default App;
