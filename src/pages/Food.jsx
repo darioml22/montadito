@@ -37,9 +37,10 @@ export default function Food() {
     const load = async () => {
       let publicList = [];
       try {
-        const res = await fetch("/memories.json", { cache: "no-store" });
-        if (res.ok) publicList = await res.json();
-      } catch (e) {}
+        const base = import.meta.env.BASE_URL || "/";
+        const res = await fetch(`${base}memories.json`, { cache: "no-store" });
+         if (res.ok) publicList = await res.json();
+       } catch (e) {}
 
       const local = JSON.parse(localStorage.getItem("memories") || "[]");
 
