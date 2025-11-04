@@ -1,4 +1,3 @@
-// ...existing imports...
 import { useState, useEffect } from "react";
 import Memory from "../components/Memory";
 
@@ -13,23 +12,9 @@ const cuisineToCountry = {
 };
 
 export default function Food() {
-  const [memories, setMemories] = useState(() => {
-    const saved = localStorage.getItem("memories");
-    if (!saved) return [];
-    try {
-      const parsed = JSON.parse(saved);
-      return parsed.map((m) => {
-        const cuisine = (m.cuisine || "").toString().trim().toLowerCase();
-        return { ...m, countryCode: m.countryCode || cuisineToCountry[cuisine] || "" };
-      });
-    } catch {
-      return [];
-    }
-  });
-
+  const [memories, setMemories] = useState([]);
   const [selectedMemory, setSelectedMemory] = useState(null);
   const [editingMemoryIndex, setEditingMemoryIndex] = useState(null);
-
   const [formData, setFormData] = useState({
     title: "",
     date: "",
@@ -39,8 +24,42 @@ export default function Food() {
     images: [],
     rating: 0,
   });
-
   const [carouselIndex, setCarouselIndex] = useState(0);
+
+  const isLocal =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.protocol === "file:");
+
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      let publicList = [];
+      try {
+        const res = await fetch("/memories.json", { cache: "no-store" });
+        if (res.ok) publicList = await res.json();
+      } catch (e) {}
+
+      const local = JSON.parse(localStorage.getItem("memories") || "[]");
+
+      const normalize = (m) => {
+        const cuisine = (m.cuisine || "").toString().trim().toLowerCase();
+        return { ...m, cuisine, countryCode: m.countryCode || cuisineToCountry[cuisine] || "" };
+      };
+
+      const publicNorm = publicList.map(normalize);
+      const localNorm = local.map(normalize);
+      const merged = [
+        ...publicNorm,
+        ...localNorm.filter((l) => !publicNorm.some((p) => p.id === l.id)),
+      ];
+
+      if (mounted) setMemories(merged);
+    };
+    load();
+    return () => (mounted = false);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("memories", JSON.stringify(memories));
@@ -136,15 +155,31 @@ export default function Food() {
     );
   };
 
+  const downloadJSON = () => {
+    const data = JSON.stringify(memories, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "memories-export.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#658C58] to-[#F7F2D7] text-gray-900">
       <div className="max-w-6xl mx-auto mt-8">
-        <header className="flex justify-center mb-8">
-          <div className="flex flex-col items-center">
+        <header className="flex justify-between items-center mb-8">
+          <div className="flex flex-col">
             <h1 className="text-3xl font-extrabold">Food memories</h1>
-            <div className="text-sm text-gray-600 mt-1">
-              Add, browse and remember great meals
-            </div>
+            <div className="text-sm text-gray-600 mt-1">Add, browse and remember great meals</div>
+          </div>
+          <div>
+            {isLocal ? (
+              <span className="text-sm text-green-800">Author mode</span>
+            ) : (
+              <span className="text-sm text-gray-500">Public gallery</span>
+            )}
           </div>
         </header>
 
@@ -156,6 +191,19 @@ export default function Food() {
               <span className="text-xs text-gray-500">Saved: </span>
               <div className="mt-2 text-sm font-medium">{memories.length}</div>
             </div>
+
+            {/* Export button moved here (less prominent, green to match palette) */}
+            {isLocal && (
+              <div className="mt-6">
+                <button
+                  onClick={downloadJSON}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded-md text-sm"
+                >
+                  Export JSON
+                </button>
+                <div className="text-xs text-gray-500 mt-2">Export and run write-memories to publish</div>
+              </div>
+            )}
           </aside>
 
           <main className="col-span-7">
@@ -181,102 +229,102 @@ export default function Food() {
             </div>
           </main>
 
-          <aside className="col-span-3">
-            <div className="bg-white/80 rounded-xl p-6 shadow">
-              <h2 className="text-xl font-semibold mb-4">{editingMemoryIndex !== null ? "Edit memory" : "Add memory"}</h2>
+          {isLocal && (
+            <aside className="col-span-3">
+              <div className="bg-white/80 rounded-xl p-6 shadow">
+                <h2 className="text-xl font-semibold mb-4">{editingMemoryIndex !== null ? "Edit memory" : "Add memory"}</h2>
 
-              <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageChange}
-                  className="text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-green-600 file:text-white cursor-pointer"
-                />
+                <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageChange}
+                    className="text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-green-600 file:text-white cursor-pointer"
+                  />
 
-                <input
-                  type="text"
-                  placeholder="Title"
-                  value={formData.title}
-                  onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
-                  className="border rounded px-3 py-2"
-                />
+                  <input
+                    type="text"
+                    placeholder="Title"
+                    value={formData.title}
+                    onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
+                    className="border rounded px-3 py-2"
+                  />
 
-                <input
-                  type="date"
-                  value={formData.date}
-                  onChange={(e) => setFormData((p) => ({ ...p, date: e.target.value }))}
-                  className="border rounded px-3 py-2"
-                />
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData((p) => ({ ...p, date: e.target.value }))}
+                    className="border rounded px-3 py-2"
+                  />
 
-                <select
-                  value={formData.cuisine}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setFormData((p) => ({ ...p, cuisine: v, countryCode: cuisineToCountry[v.toString().toLowerCase()] || "" }));
-                  }}
-                  className="border rounded px-3 py-2"
-                >
-                  <option value="">Select cuisine</option>
-                  {Object.keys(cuisineToCountry).map((c) => (
-                    <option key={c} value={c}>
-                      {c[0].toUpperCase() + c.slice(1)}
-                    </option>
-                  ))}
-                </select>
-
-                <textarea
-                  placeholder="Note"
-                  value={formData.note}
-                  onChange={(e) => setFormData((p) => ({ ...p, note: e.target.value }))}
-                  className="border rounded px-3 py-2 h-20 resize-none"
-                />
-
-                <div className="flex gap-2">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      onClick={() => setFormData((p) => ({ ...p, rating: n }))}
-                      className={`text-2xl ${n <= formData.rating ? "text-yellow-400" : "text-gray-300"}`}
-                    >
-                      ★
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex gap-2">
-                  <button type="submit" className="flex-1 bg-green-600 text-white rounded px-4 py-2">
-                    {editingMemoryIndex !== null ? "Save" : "Add"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData({
-                        title: "",
-                        date: "",
-                        cuisine: "",
-                        countryCode: "",
-                        note: "",
-                        images: [],
-                        rating: 0,
-                      })
-                    }
-                    className="flex-1 border rounded px-4 py-2"
+                  <select
+                    value={formData.cuisine}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setFormData((p) => ({ ...p, cuisine: v, countryCode: cuisineToCountry[v.toString().toLowerCase()] || "" }));
+                    }}
+                    className="border rounded px-3 py-2"
                   >
-                    Reset
-                  </button>
-                </div>
-              </form>
-            </div>
-          </aside>
+                    <option value="">Select cuisine</option>
+                    {Object.keys(cuisineToCountry).map((c) => (
+                      <option key={c} value={c}>
+                        {c[0].toUpperCase() + c.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+
+                  <textarea
+                    placeholder="Note"
+                    value={formData.note}
+                    onChange={(e) => setFormData((p) => ({ ...p, note: e.target.value }))}
+                    className="border rounded px-3 py-2 h-20 resize-none"
+                  />
+
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setFormData((p) => ({ ...p, rating: n }))}
+                        className={`text-2xl ${n <= formData.rating ? "text-yellow-400" : "text-gray-300"}`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button type="submit" className="flex-1 bg-green-600 text-white rounded px-4 py-2">
+                      {editingMemoryIndex !== null ? "Save" : "Add"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData({
+                          title: "",
+                          date: "",
+                          cuisine: "",
+                          countryCode: "",
+                          note: "",
+                          images: [],
+                          rating: 0,
+                        })
+                      }
+                      className="flex-1 border rounded px-4 py-2"
+                    >
+                      Reset
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </aside>
+          )}
         </div>
 
         {selectedMemory && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6">
             <div className="bg-white rounded-lg w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
-
-              {/* Imagen */}
               <div className="relative flex-shrink-0 flex items-center justify-center bg-black/10 p-4">
                 <img
                   src={selectedMemory.images?.[carouselIndex] || "https://via.placeholder.com/800x500?text=No+Image"}
@@ -284,7 +332,6 @@ export default function Food() {
                   className="max-h-[60vh] max-w-full object-contain rounded-lg"
                 />
 
-                {/* prev / next buttons */}
                 <button
                   onClick={handlePrevImage}
                   className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 text-white w-10 h-10 rounded-full flex items-center justify-center hover:bg-black/70"
@@ -310,7 +357,6 @@ export default function Food() {
                 </button>
               </div>
 
-              {/* Texto */}
               <div className="p-4 overflow-auto flex-1 flex flex-col justify-between">
                 <div className="text-center">
                   <h3 className="text-lg font-semibold">{selectedMemory.title}</h3>

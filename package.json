@@ -9,7 +9,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "write-memories": "node scripts/write-memories.js"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.16",
