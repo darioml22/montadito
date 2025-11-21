@@ -10,6 +10,8 @@ app.use(express.json({ limit: "500mb" }));
 const __dirname = path.resolve();
 const dataPath = path.join(__dirname, "src/assets/memories.json");
 
+const PORT = process.env.PORT || 3000;
+
 // GET - devolver todas las memorias
 app.get("/memories", (req, res) => {
   try {
@@ -33,4 +35,6 @@ app.post("/memories", (req, res) => {
   }
 });
 
-app.listen(3000, () => console.log("Backend running on http://localhost:3000"));
+app.listen(PORT, () => {
+  console.log(`Backend running on port ${PORT}`);
+});

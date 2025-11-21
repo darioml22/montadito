@@ -51,7 +51,7 @@ export default function Food() {
   useEffect(() => {
     const fetchMemories = async () => {
       try {
-        const res = await fetch("https://mi-backend.onrender.com/memories");
+        const res = await fetch("http://localhost:3000/memories");
         if (!res.ok) return;
         const data = await res.json();
         setMemories(prev => prev.length ? prev : data);
@@ -65,7 +65,7 @@ export default function Food() {
   // === Save updated memories to backend ===
   const saveToServer = async (updated) => {
     try {
-      const res = await fetch("http://localhost:3000/memories", {
+      const res = await fetch("https://montadito2.onrender.com/", { //http://localhost:3000/memories --> Local
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updated),
@@ -178,22 +178,22 @@ export default function Food() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-[#658C58] to-[#F7F2D7] text-gray-900">
-      <div className="max-w-6xl mx-auto mt-8">
-        <header className="flex justify-between items-center mb-8">
+      <div className="max-w-6xl mx-auto mt-8 px-4">
+        <header className="flex justify-between items-center mb-8 px-4">
           <div className="flex flex-col text-center mx-auto">
             <h1 className="text-3xl font-extrabold">Food memories</h1>
-            <div className="text-sm text-gray-600 mt-1">Cool ass subtitle!</div>
+            <div className="text-sm text-gray-600 mt-1">Nikoline I love you!</div>
           </div>
         </header>
 
         <div className="grid grid-cols-12 gap-6">
-          <main className="col-span-8 bg-white/70 rounded-xl p-6 shadow">
+          <main className="col-span-12 md:col-span-8 bg-white/70 rounded-xl p-6 shadow">
             {memories.length === 0 ? (
               <div className="py-12 text-center text-gray-600">
                 No memories yet — add one below.
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 items-center">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 items-center">
                 {currentMemories.map((memory, index) => (
                   <Memory
                     key={memory.id ?? index}
@@ -210,7 +210,7 @@ export default function Food() {
             )}
             {selectedMemory && (  
               <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-                <div className="bg-white p-4 rounded-lg shadow-lg max-w-lg w-full relative">
+                <div className="bg-white p-4 sm:p-6 rounded-lg shadow-lg max-w-lg w-[90%] sm:w-full relative">
                   <button
                     onClick={() => setSelectedMemory(null)}
                     className="absolute top-2 right-2 text-gray-600 hover:text-gray-900 text-2xl"
@@ -300,8 +300,8 @@ export default function Food() {
                 )}
           </main>
 
-          <aside className="col-span-4">
-            <div className="bg-white/80 rounded-xl p-6 shadow">
+          <aside className="col-span-12 md:col-span-4">
+            <div className="bg-white/80 rounded-xl p-4 sm:p-6 shadow">
               <h2 className="text-xl font-semibold mb-4">
                 {editingMemoryIndex !== null ? "Edit memory" : "Add memory"}
               </h2>
@@ -312,7 +312,7 @@ export default function Food() {
                   accept="image/*"
                   multiple
                   onChange={handleImageChange}
-                  className="text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-green-600 file:text-white cursor-pointer"
+                  className="text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-green-600 file:text-white cursor-pointer w-full"
                 />
                 <input
                   type="text"
@@ -321,7 +321,7 @@ export default function Food() {
                   onChange={(e) =>
                     setFormData((p) => ({ ...p, title: e.target.value }))
                   }
-                  className="border rounded px-3 py-2"
+                  className="border rounded px-3 py-2 w-full"
                 />
                 <input
                   type="date"
@@ -329,7 +329,7 @@ export default function Food() {
                   onChange={(e) =>
                     setFormData((p) => ({ ...p, date: e.target.value }))
                   }
-                  className="border rounded px-3 py-2"
+                  className="border rounded px-3 py-2 w-full"
                 />
                 <select
                   value={formData.cuisine}
