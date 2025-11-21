@@ -51,7 +51,7 @@ export default function Food() {
   useEffect(() => {
     const fetchMemories = async () => {
       try {
-        const res = await fetch("http://localhost:3000/memories");
+        const res = await fetch("https://montadito2.onrender.com/memories"); //http://localhost:3000/memories --> Local
         if (!res.ok) return;
         const data = await res.json();
         setMemories(prev => prev.length ? prev : data);
@@ -65,7 +65,7 @@ export default function Food() {
   // === Save updated memories to backend ===
   const saveToServer = async (updated) => {
     try {
-      const res = await fetch("https://montadito2.onrender.com/", { //http://localhost:3000/memories --> Local
+      const res = await fetch("https://montadito2.onrender.com/memories", { //http://localhost:3000/memories --> Local
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updated),
